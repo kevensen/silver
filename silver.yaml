@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: silver
+metadata:
+  annotations:
+    description: A deployer for a silver image
+    iconClass: icon-shadowman
+    tags: silver
+  creationTimestamp: null
+  name: silver
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the application
+    name: silver-builder-${BUILDER_NAME}
+  spec:
+    output:
+      to:
+        kind: "DockerImage"
+        name: ${OUTPUT_IMAGE_REGISTRY}/${INPUT_IMAGE}
+    source:
+      contextDir: ${SILVER_CONTEXT_DIR}
+      git:
+        ref: ${SILVER_REPOSITORY_REF}
+        uri: ${SILVER_REPOSITORY_URL}
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: ${INPUT_IMAGE}
+          namespace: ${INPUT_IMAGE_NAMESPACE}
+        forcePull: true
+      type: Docker
+    triggers:
+    - github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+    - generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+      type: Generic
+    - imageChange: {}
+      type: ImageChange
+    - type: ConfigChange
+parameters:
+- description: The Name for the Builder
+  displayName: Builder Name
+  name: BUILDER_NAME
+  required: true
+- description: The Input Image
+  displayName: Input Image
+  name: INPUT_IMAGE
+  required: true
+- description: The Input Image Namespace
+  displayName: Input Image Namespace
+  name: INPUT_IMAGE_NAMESPACE
+  required: true
+  value: bronze
+- description: The Output Image
+  displayName: Output Image
+  name: OUTPUT_IMAGE_REGISTRY
+  required: true
+  value: registry.ocp.kenscloud.io:5000/silver
+- description: GitHub trigger secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  name: GITHUB_WEBHOOK_SECRET
+  displayName: GitHub Webhook Secret
+  required: true
+- description: Generic build trigger secret
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  displayName: Generic Webhook Secret
+  name: GENERIC_WEBHOOK_SECRET
+  required: true
+- description: Git source URI for Silver
+  name: SILVER_REPOSITORY_URL
+  required: true
+  value: https://github.com/kevensen/silver.git
+- description: Git branch/tag reference
+  name: SILVER_REPOSITORY_REF
+  value: master
+- description: Path within Git project to build; empty for root project directory.
+  name: SILVER_CONTEXT_DIR
+  value: /

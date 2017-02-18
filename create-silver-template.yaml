@@ -1,0 +1,82 @@
+#!/bin/bash
+
+
+# First we will create the template.  This will overwrite any existing template.
+
+cat > silver-template.yaml << EOF
+apiVersion: v1
+kind: Template
+labels:
+  template: silver
+metadata:
+  annotations:
+    description: |- This template will rebuild and update all existing image streams
+    iconClass: icon-shaddowman
+    openshift.io/display-name: Silver Images
+    tags: silver
+  creationTimestamp: null
+  name: silver
+objects:
+EOF
+
+
+for is in $(oc get is -n openshift | cut -d' ' -f1 | grep -v "NAME"); do
+  cat >> silver-template.yaml << EOF
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the ${is} application image
+    name: ${is}
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the ${is} silver image
+    name: ${is}-silver
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: \${NAME}:latest
+    source:
+      contextDir: \${CONTEXT_DIR}
+      git:
+        ref: \${SOURCE_REPOSITORY_REF}
+        uri: \${SOURCE_REPOSITORY_URL}
+      type: Git
+    strategy:
+      type: Docker
+      dockerStrategy:
+        from:
+          kind: "ImageStreamTag"
+          name: "${is}:latest"
+    triggers:
+    - type: ImageChange
+    - type: ConfigChange
+    - github:
+        secret: \${GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+EOF
+done
+
+cat >> silver-template.yaml << EOF
+- description: The OpenShift Namespace where the ImageStreams reside.
+  displayName: Namespace
+  name: NAMESPACE
+  required: true
+  value: openshift
+- description: The URL of the repository with the silver Dockerfile.
+  displayName: Git Repository URL
+  name: SOURCE_REPOSITORY_URL
+  required: true
+  value: https://github.com/kevensen/silver.git
+- description: Set this to a branch name, tag or other ref of your repository if you
+    are not using the default branch.
+  displayName: Git Reference
+  name: SOURCE_REPOSITORY_REF
+- description: Set this to the relative path to your project if it is not in the root
+    of your repository.
+  displayName: Context Directory
+  name: CONTEXT_DIR
+EOF

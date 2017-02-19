@@ -27,6 +27,4 @@ Grant all users the ability to use the silver images
 oc policy add-role-to-group view -n silver system:authenticated
 ```
 
-*NOTE:* Pay attentention to the database images.  The last USER directive may need to be changed in the Dockerfiles.
-
 Add to the project and wait.  Rebuilding all the image streams does take a bit.

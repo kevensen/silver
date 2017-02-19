@@ -4,7 +4,7 @@ This project provides a simple mechanism to update all the image streams in your
 ## Usage
 Create a "silver" project in OpenShift.
 ```terminal
-oc create -f silver
+oc new-project silver --display-name=Silver --description="Project for Silver Images"
 ```
 Clone the repository.
 ```terminal
@@ -17,6 +17,10 @@ cd silver
 Generate the template.
 ```terminal
 bash create-silver-template.sh
+```
+Create the template in the Silver project
+```terminal
+oc create -f silver-template.sh
 ```
 Grant all users the ability to use the silver images
 ```terminal

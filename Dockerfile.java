@@ -1,4 +1,4 @@
-FROM silver/s2i-base-rhel7
+FROM s2i-base-rhel7:latest
 
 MAINTAINER Kenneth D. Evensen <kevensen@redhat.com>
 
